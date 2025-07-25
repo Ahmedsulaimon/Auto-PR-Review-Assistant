@@ -67,6 +67,27 @@ While SQLite or JSON files could offer a lightweight option for early developmen
 
 **Conclusion:** FastAPI is ideal for webhook-heavy, async-capable APIs like this one. Flask remains an option for simpler or familiar workflows, but FastAPI provides a more robust and scalable backbone for our use case.
 
+## Why GitHub GraphQL API over REST API
+
+### Efficiency & Flexibility
+
+- With GraphQL you can fetch exactly the fields you need in one round‑trip (e.g., pull‑request title, diff, author, files changed, review comments) rather than juggling multiple REST endpoints.  
+- If tomorrow you need additional metadata (say a check‑run status, CI details, or labels) you can add it to your query without changing URLs or client logic.
+
+### Performance & Rate‑Limit Benefits
+
+- GitHub’s GraphQL API gives you a higher rate‑limit quota (measured in points) compared to REST, and batching multiple REST calls into one GraphQL query usually consumes fewer points.  
+- Fewer network hops means lower latency and less complexity in orchestrating parallel calls.
+
+### Strong Typing & Discoverability
+
+- The GraphQL schema is strongly typed: your IDE can autocomplete available fields, and you get immediate feedback when a field doesn’t exist.  
+- This makes it easier to evolve your data models and client code in lock‑step.
+
+### Uniform Tooling with Octokit
+
+- Octokit (the official GitHub SDK) offers built‑in GraphQL client support in multiple languages, so you can still leverage its authentication helpers, pagination utilities, and error handling—just pointing it at a GraphQL endpoint instead of REST.
+
 ### Why CLI Dashboard First Instead of React + Tailwind?
 
 | Factor                     | CLI (Typer)                    | React + Tailwind Frontend              |

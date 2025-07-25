@@ -67,7 +67,7 @@ While SQLite or JSON files could offer a lightweight option for early developmen
 
 **Conclusion:** FastAPI is ideal for webhook-heavy, async-capable APIs like this one. Flask remains an option for simpler or familiar workflows, but FastAPI provides a more robust and scalable backbone for our use case.
 
-## Why GitHub GraphQL API over REST API
+### Why GitHub GraphQL API over REST API?
 
 ### Efficiency & Flexibility
 

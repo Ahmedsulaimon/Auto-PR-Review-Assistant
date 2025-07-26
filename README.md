@@ -31,11 +31,11 @@ The Minimum Viable Product will include the following capabilities:
 
 ## Tech Stack
 
-| Layer            | Technology                | Purpose                                                                    |
+| Layer            | Technology                 | Purpose                                                                    |
 |------------------|----------------------------|----------------------------------------------------------------------------|
 | **Backend API**  | Python 3.11, FastAPI       | Webhook listener, review orchestration                                     |
 | **AI Engine**    | OpenAI GPT API             | Generate review feedback                                                   |
-| **GitHub Client**| PyGitHub or Octokit.py     | Webhook validation, posting comments                                       |
+| **GitHub Client**| GitHub GraphQL API         | Webhook validation, posting comments                                       |
 | **Persistence**  | Redis                      | Fast, in-memory storage for caching PR metadata, config, and job queues    |
 | **CLI Dashboard**| Typer (Python CLI toolkit) | Local interface to query PR statuses                                       |
 | **Deployment**   | Docker, GitHub Actions     | Containerization & CI/CD                                                   |

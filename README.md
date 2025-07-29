@@ -129,7 +129,7 @@ auto‑pr-review-assistant/
 └── tests/
     ├── service_tests/
     └── cli_tests/
-
+```
 
 ## Getting Started
 ### Prerequisites

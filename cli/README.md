@@ -1,6 +1,6 @@
 ### Boilerplate: `cli/README.md`
 
-```markdown
+
 # CLI Dashboard
 
 ## Commands

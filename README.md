@@ -101,33 +101,35 @@ While SQLite or JSON files could offer a lightweight option for early developmen
 
 ## Project Structure
 
-auto-pr-review-assistant/
-├── README.md                     # Project overview, setup, usage
-├── CONTRIBUTING.md               # Contribution guidelines
-├── docs/                         # Extended documentation (optional)
+```text
+auto‑pr-review-assistant/
+├── README.md
+├── CONTRIBUTING.md
+├── docs/
 │   ├── architecture.md
 │   └── api-spec.md
-├── services/                     # Microservices
-│   ├── webhook-listener/         
-│   │   ├── README.md             # Setup, env vars, run instructions
+├── services/
+│   ├── webhook-listener/
+│   │   ├── README.md
 │   │   ├── main.py
 │   │   └── requirements.txt
-│   └── review-engine/            
-│       ├── README.md             # Prompt templates, config, usage
+│   └── review-engine/
+│       ├── README.md
 │       ├── engine.py
 │       └── requirements.txt
-├── cli/                          # CLI dashboard
-│   ├── README.md                 # Commands, flags, examples
+├── cli/
+│   ├── README.md
 │   └── cli.py
-├── infrastructure/               # Deployment configs
+├── infrastructure/
 │   ├── Dockerfile
 │   ├── docker-compose.yml
-│   └── github-actions.yml        # CI/CD workflows
-├── config/                       # YAML configuration templates
+│   └── github-actions.yml
+├── config/
 │   └── default-config.yaml
-└── tests/                        # Test suites
+└── tests/
     ├── service_tests/
     └── cli_tests/
+
 
 ## Getting Started
 ### Prerequisites

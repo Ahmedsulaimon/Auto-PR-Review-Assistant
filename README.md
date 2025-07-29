@@ -100,6 +100,7 @@ While SQLite or JSON files could offer a lightweight option for early developmen
 **Conclusion:** Starting with a CLI dashboard enables rapid prototyping and fast feedback. A full web UI is a future milestone once data pipelines and review analysis are stable.
 
 ## Project Structure
+
 auto-pr-review-assistant/
 ├── README.md                     # Project overview, setup, usage
 ├── CONTRIBUTING.md               # Contribution guidelines

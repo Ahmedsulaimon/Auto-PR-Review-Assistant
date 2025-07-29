@@ -99,6 +99,35 @@ While SQLite or JSON files could offer a lightweight option for early developmen
 
 **Conclusion:** Starting with a CLI dashboard enables rapid prototyping and fast feedback. A full web UI is a future milestone once data pipelines and review analysis are stable.
 
+## Project Structure
+auto-pr-review-assistant/
+├── README.md                     # Project overview, setup, usage
+├── CONTRIBUTING.md               # Contribution guidelines
+├── docs/                         # Extended documentation (optional)
+│   ├── architecture.md
+│   └── api-spec.md
+├── services/                     # Microservices
+│   ├── webhook-listener/         
+│   │   ├── README.md             # Setup, env vars, run instructions
+│   │   ├── main.py
+│   │   └── requirements.txt
+│   └── review-engine/            
+│       ├── README.md             # Prompt templates, config, usage
+│       ├── engine.py
+│       └── requirements.txt
+├── cli/                          # CLI dashboard
+│   ├── README.md                 # Commands, flags, examples
+│   └── cli.py
+├── infrastructure/               # Deployment configs
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── github-actions.yml        # CI/CD workflows
+├── config/                       # YAML configuration templates
+│   └── default-config.yaml
+└── tests/                        # Test suites
+    ├── service_tests/
+    └── cli_tests/
+
 ## Getting Started
 ### Prerequisites
 - Python 3.11

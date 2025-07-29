@@ -99,14 +99,25 @@ While SQLite or JSON files could offer a lightweight option for early developmen
 
 **Conclusion:** Starting with a CLI dashboard enables rapid prototyping and fast feedback. A full web UI is a future milestone once data pipelines and review analysis are stable.
 
-## Roadmap & Next Steps
+## Getting Started
+### Prerequisites
+- Python 3.11
+- Redis
+- GitHub GraphQL API access token
 
-1. Implement webhook receiver and basic request validation.  
-2. Wire up OpenAI API and develop prompt templates.  
-3. Post inline comments for small test repos.  
-4. Introduce configuration file parsing.  
-5. Expand checks (security scanning, test coverage hints).  
-6. Build a web dashboard for organization‑wide overview.
+### Installation
+```bash
+git clone <repo-url>
+cd auto-pr-review-assistant
+pip install -r services/webhook-listener/requirements.txt \
+            -r services/review-engine/requirements.txt
+
+### Usage
+- Start Redis: redis-server
+- Run webhook listener: uvicorn services/webhook-listener.main:app --reload
+- Use CLI: python cli/cli.py list-prs           
+
+
 
 ---
 

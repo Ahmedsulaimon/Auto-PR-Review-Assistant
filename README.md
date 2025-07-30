@@ -143,7 +143,7 @@ git clone <repo-url>
 cd auto-pr-review-assistant
 pip install -r services/webhook-listener/requirements.txt \
             -r services/review-engine/requirements.txt
-
+```
 ### Usage
 - Start Redis: redis-server
 - Run webhook listener: uvicorn services/webhook-listener.main:app --reload

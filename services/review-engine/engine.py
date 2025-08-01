@@ -2,11 +2,16 @@ import asyncio, json
 import re
 
 from aioredis import from_url
-from dotenv import load_dotenv
-load_dotenv()
+
 import os
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Explicitly point to root .env
+env_path = Path(__file__).resolve().parents[2] / ".env"
+load_dotenv(dotenv_path=env_path)
 
 async def review_worker():
     redis = await from_url(os.getenv("REDIS_URL"))

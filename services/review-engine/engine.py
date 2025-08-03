@@ -2,19 +2,39 @@ import asyncio, json
 import re
 
 from aioredis import from_url
+from dotenv import load_dotenv
 
 import os
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 from pathlib import Path
-from dotenv import load_dotenv
 
 # Explicitly point to root .env
-env_path = Path(__file__).resolve().parents[2] / ".env"
-load_dotenv(dotenv_path=env_path)
+# env_path = Path(__file__).resolve().parents[1] / ".env"
+# load_dotenv(dotenv_path=env_path)
 
 async def review_worker():
-    redis = await from_url(os.getenv("REDIS_URL"))
+    redis_url = os.getenv("REDIS_URL_DOCKER")
+    print(f"Raw Redis URL: '{redis_url}'")
+    print(f"Redis URL type: {type(redis_url)}")
+    print(f"Redis URL length: {len(redis_url) if redis_url else 'None'}")
+    
+    if not redis_url:
+        print("ERROR: REDIS_URL_DOCKER environment variable is not set!")
+        return
+    
+    # Clean the URL of any whitespace/hidden characters
+    redis_url = redis_url.strip()
+    print(f"Cleaned Redis URL: '{redis_url}'")
+    
+    try:
+        redis = await from_url(redis_url)
+    except Exception as e:
+        print(f"Failed to connect to Redis: {e}")
+        # Try a fallback URL
+        fallback_url = "redis://redis:6379"
+        print(f"Trying fallback URL: {fallback_url}")
+        redis = await from_url(fallback_url)
     # configure your GraphQL client
     transport = AIOHTTPTransport(url="https://api.github.com/graphql", headers={
         "Authorization": f"Bearer {os.getenv('GITHUB_TOKEN')}"

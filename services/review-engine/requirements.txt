@@ -1,0 +1,6 @@
+gql
+asyncio
+aioredis
+pathlib 
+aiohttp
+dotenv

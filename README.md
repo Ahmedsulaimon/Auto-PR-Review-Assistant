@@ -111,24 +111,28 @@ auto‑pr-review-assistant/
 ├── services/
 │   ├── webhook-listener/
 │   │   ├── README.md
+|   |   |── Dockerfile
 │   │   ├── main.py
 │   │   └── requirements.txt
 │   └── review-engine/
 │       ├── README.md
+|       |── Dockerfile
 │       ├── engine.py
 │       └── requirements.txt
 ├── cli/
 │   ├── README.md
 │   └── cli.py
 ├── infrastructure/
-│   ├── Dockerfile
 │   ├── docker-compose.yml
 │   └── github-actions.yml
 ├── config/
 │   └── default-config.yaml
 └── tests/
-    ├── service_tests/
-    └── cli_tests/
+|    ├── service_tests/
+|    └── cli_tests/
+|──.env
+|──.gitignore
+
 ```
 
 ## Getting Started
@@ -150,7 +154,8 @@ pip install -r services/webhook-listener/requirements.txt \
 - Use CLI: python cli/cli.py list-prs           
 
 
-
+selecting the right python image (vulnerabilities) and redis version, moving from running localling to running on Docker, challenges encountered, approach taken and lesson learned
+ 
 ---
 
 _This document outlines the high‑level plan and is subject to refinement as the project evolves._

@@ -46,7 +46,7 @@ The Minimum Viable Product will include the following capabilities:
 ## Design Rationale
 
 
-### Why Redis SQLite or JSON files?
+### Why Redis Instead SQLite or JSON files?
 
 While SQLite or JSON files could offer a lightweight option for early development, Redis was chosen for its performance and flexibility. It enables:
 
@@ -123,6 +123,7 @@ auto‑pr-review-assistant/
 │   ├── README.md
 │   └── cli.py
 ├── infrastructure/
+|   |── .env    
 │   ├── docker-compose.yml
 │   └── github-actions.yml
 ├── config/
@@ -130,7 +131,6 @@ auto‑pr-review-assistant/
 └── tests/
 |    ├── service_tests/
 |    └── cli_tests/
-|──.env
 |──.gitignore
 
 ```
@@ -154,8 +154,6 @@ pip install -r services/webhook-listener/requirements.txt \
 - Use CLI: python cli/cli.py list-prs           
 
 
-selecting the right python image (vulnerabilities) and redis version, moving from running localling to running on Docker, challenges encountered, approach taken and lesson learned
- 
 ---
 
 _This document outlines the high‑level plan and is subject to refinement as the project evolves._

@@ -1,13 +1,7 @@
 from fastapi import FastAPI, Header, HTTPException, Request
 import json
 from aioredis import from_url
-from dotenv import load_dotenv
 import hmac, hashlib, os
-from pathlib import Path
-
-# Explicitly point to root .env
-# env_path = Path(__file__).resolve().parents[1] / ".env"
-# load_dotenv(dotenv_path=env_path)
 
 
 
@@ -29,8 +23,7 @@ async def handle_webhook(request: Request, x_hub_signature: str = Header(...)):
         pr = payload.get("pull_request")
         if not pr:
             return {"ignored": True}
-        redis_url = os.getenv("REDIS_URL_DOCKER")
-        print(f"Raw Redis URL: '{redis_url}'")
+        
         redis = await from_url(os.getenv("REDIS_URL_DOCKER"))
         job = {
                 "repo": payload["repository"]["full_name"],
@@ -38,6 +31,8 @@ async def handle_webhook(request: Request, x_hub_signature: str = Header(...)):
                 "action": payload["action"]  # e.g. "opened", "synchronize"
             }
         await redis.lpush("pr-review-queue", json.dumps(job))
+        print(f" Enqueued PR job: {job}")
+
         return {"enqueued": job}
 #docker compose build --no-cache
 #docker compose up

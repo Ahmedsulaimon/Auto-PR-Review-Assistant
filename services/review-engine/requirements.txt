@@ -1,6 +1,7 @@
-gql
+gql[aiohttp]
 asyncio
 aioredis
 pathlib 
 aiohttp
 dotenv
+httpx

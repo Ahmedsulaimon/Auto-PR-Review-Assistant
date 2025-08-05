@@ -1,53 +1,75 @@
-import asyncio, json
-import re
-
+import asyncio, json, re, os
 from aioredis import from_url
-from dotenv import load_dotenv
-
-import os
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
-from pathlib import Path
-
-# Explicitly point to root .env
-# env_path = Path(__file__).resolve().parents[1] / ".env"
-# load_dotenv(dotenv_path=env_path)
+import httpx
 
 async def review_worker():
+    print(" Starting review worker...")
     redis_url = os.getenv("REDIS_URL_DOCKER")
-    print(f"Raw Redis URL: '{redis_url}'")
-    print(f"Redis URL type: {type(redis_url)}")
-    print(f"Redis URL length: {len(redis_url) if redis_url else 'None'}")
-    
+    github_token = os.getenv('GITHUB_TOKEN')
+
+    print(f"📋 Environment check:")
+    print(f"  - Redis URL: {' Set' if redis_url else ' Missing'}")
+    print(f"  - GitHub Token: {' Set' if github_token else ' Missing'}")
+
     if not redis_url:
         print("ERROR: REDIS_URL_DOCKER environment variable is not set!")
         return
-    
-    # Clean the URL of any whitespace/hidden characters
-    redis_url = redis_url.strip()
-    print(f"Cleaned Redis URL: '{redis_url}'")
-    
+    if not github_token:
+        print("ERROR: GITHUB_TOKEN environment variable is not set!")
+        return
+    print(" Attempting to connect to Redis...")
     try:
-        redis = await from_url(redis_url)
+        redis = await from_url(redis_url.strip())
+        # Test the connection
+        await redis.ping()
+        print(f" Connected to Redis at: {redis_url}")
     except Exception as e:
-        print(f"Failed to connect to Redis: {e}")
-        # Try a fallback URL
-        fallback_url = "redis://redis:6379"
-        print(f"Trying fallback URL: {fallback_url}")
-        redis = await from_url(fallback_url)
-    # configure your GraphQL client
-    transport = AIOHTTPTransport(url="https://api.github.com/graphql", headers={
-        "Authorization": f"Bearer {os.getenv('GITHUB_TOKEN')}"
-    })
-    client = Client(transport=transport, fetch_schema_from_transport=True)
+        print(f" Failed to connect to Redis: {e}")
+        import traceback
+        traceback.print_exc()
+        return
+    print(" Setting up GitHub GraphQL client...")
+    # Setup GraphQL client
+   
+    if not github_token:
+        print("ERROR: GITHUB_TOKEN environment variable is not set!")
+        return
+    try:
+        # Setup GraphQL client        
+        graphql_transport = AIOHTTPTransport(
+            url="https://api.github.com/graphql",
+            headers={"Authorization": f"Bearer {github_token}"},
+            ssl=False  # Disable SSL warning
+        )
+        graphql_client = Client(transport=graphql_transport, fetch_schema_from_transport=True)
+        print(" GitHub GraphQL client configured")
+    except Exception as e:
+        print(f" Failed to setup GraphQL client: {e}")
+        import traceback
+        traceback.print_exc()
+        return
+    
+    # Setup REST headers
+    rest_headers = {
+        "Authorization": f"Bearer {github_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    print(" Review worker is running and waiting for jobs...")
 
     while True:
+      try:
+        print("⏳ Waiting for job from Redis...")
         _, payload = await redis.brpop("pr-review-queue")
         job = json.loads(payload)
+        print(f" Got job from Redis: {job}")
+
         repo = job["repo"]
         pr_number = job["pr_number"]
+        owner, name = repo.split("/")
 
-        # 1) Fetch PR diff via GraphQL
+        # === 1) Get PR metadata (GraphQL) ===
         query = gql(
             """
             query($owner: String!, $name: String!, $number: Int!) {
@@ -55,41 +77,46 @@ async def review_worker():
                 pullRequest(number: $number) {
                   id
                   title
-                  files(first: 50) {
-                    nodes {
-                      path
-                      additions
-                      deletions
-                      patch
-                    }
-                  }
+                  url
                 }
               }
             }
             """
         )
-        owner, name = repo.split("/")
-        variables = {"owner": owner, "name": name, "number": pr_number}
-        result = await client.execute_async(query, variable_values=variables)
+        graphql_variables = {"owner": owner, "name": name, "number": pr_number}
+        result = await graphql_client.execute_async(query, variable_values=graphql_variables)
 
-        # 2) Parse `patch` fields into text chunks
-        files = result["repository"]["pullRequest"]["files"]["nodes"]
+        pr_title = result["repository"]["pullRequest"]["title"]
+        pr_url = result["repository"]["pullRequest"]["url"]
+        print(f"\n Reviewing PR #{pr_number}: {pr_title} ({pr_url})")
+
+        # === 2) Get file patches (REST) ===
+        async with httpx.AsyncClient() as client:
+            rest_url = f"https://api.github.com/repos/{owner}/{name}/pulls/{pr_number}/files"
+            resp = await client.get(rest_url, headers=rest_headers)
+            files = resp.json()
+
+        # === 3) Parse patch hunks ===
         chunks = []
         for f in files:
             patch = f.get("patch")
             if not patch:
                 continue
-            # split by hunk header (e.g. "@@ -1,3 +1,9 @@")
+            # split by diff hunk header (e.g., @@ -1,2 +1,2 @@)
             parts = re.split(r"(^@@.*@@\n)", patch, flags=re.MULTILINE)
-            # recombine header+body
             for i in range(1, len(parts), 2):
                 header = parts[i]
                 body = parts[i+1]
-                chunks.append({"path": f["path"], "hunk": header + body})
+                chunks.append({
+                    "path": f["filename"],
+                    "hunk": header + body
+                })
 
-        # now you have `chunks` ready to feed into your LLM
-        print(f"Prepared {len(chunks)} hunks for PR #{pr_number}")
+        print(f" Prepared {len(chunks)} hunks for PR #{pr_number}")
 
-        # TODO: call OpenAI and post comments…
-
+        # === 4) TODO: Call LLM and post comments here ===
+      except Exception as e:
+              print(f" Error processing job: {e}")
+              import traceback
+              traceback.print_exc()
 asyncio.run(review_worker())

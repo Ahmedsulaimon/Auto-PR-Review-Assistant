@@ -5,3 +5,10 @@ pathlib
 aiohttp
 dotenv
 httpx
+redis
+pydantic
+fastapi
+uvicorn[standard]
+python-dotenv
+traceback2
+openai

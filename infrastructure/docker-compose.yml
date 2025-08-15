@@ -1,21 +1,37 @@
 # version: "3.9"
 
 services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - redis-data:/data
+
   review-engine:
     build: ../services/review-engine
     environment:
       - REDIS_URL_DOCKER=${REDIS_URL_DOCKER}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GITHUB_SECRET=${GITHUB_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     env_file:
       - .env
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy 
+    restart: unless-stopped
 
   webhook-listener:
     build: ../services/webhook-listener
     ports:
-    - "8000:8000" # Expose port 8000 for the webhook listener
+      - "8000:8000"
     environment:
       - REDIS_URL_DOCKER=${REDIS_URL_DOCKER}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
@@ -23,9 +39,9 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
+volumes:
+  redis-data:

@@ -5,3 +5,5 @@ aioredis
 aiohttp
 httpx
 python-multipart
+redis
+pydantic

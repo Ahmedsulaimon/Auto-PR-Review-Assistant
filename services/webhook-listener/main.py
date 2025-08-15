@@ -2,9 +2,9 @@ from fastapi import FastAPI, Header, HTTPException, Request
 import json
 from aioredis import from_url
 import hmac, hashlib, os
+import sys
 
-
-
+   
 app = FastAPI()
 
 
@@ -23,15 +23,22 @@ async def handle_webhook(request: Request, x_hub_signature: str = Header(...)):
         pr = payload.get("pull_request")
         if not pr:
             return {"ignored": True}
-        
-        redis = await from_url(os.getenv("REDIS_URL_DOCKER"))
+
+        redis_url = os.getenv("REDIS_URL_DOCKER")
+        print(f"Connecting to Redis at {redis_url}", flush=True)
+
+        redis = await from_url(redis_url, decode_responses=True)
+        await redis.ping()# Test connection
         job = {
                 "repo": payload["repository"]["full_name"],
                 "pr_number": pr["number"],
                 "action": payload["action"]  # e.g. "opened", "synchronize"
             }
-        await redis.lpush("pr-review-queue", json.dumps(job))
-        print(f" Enqueued PR job: {job}")
+        push_result = await redis.lpush("pr-review-queue", json.dumps(job))
+        print(f"LPUSH result: {push_result}", flush=True)
+
+        await redis.close()
+        print(f" Enqueued PR job: {job}", file=sys.stdout, flush=True)
 
         return {"enqueued": job}
 #docker compose build --no-cache

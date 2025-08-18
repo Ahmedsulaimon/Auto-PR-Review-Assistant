@@ -27,7 +27,7 @@ services:
       redis:
         condition: service_healthy 
     restart: unless-stopped
-
+ 
   webhook-listener:
     build: ../services/webhook-listener
     ports:

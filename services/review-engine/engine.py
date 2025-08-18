@@ -155,26 +155,38 @@ async def review_worker():
                 patch = f.get("patch")
                 if not patch:
                     continue
+                print(f"📂 File info: {f.keys()}")
+
                 parts = re.split(r"(^@@.*@@\n)", patch, flags=re.MULTILINE)
-                for i in range(1, len(parts), 2):
-                    header = parts[i]
-                    body = parts[i + 1]
+                if len(parts) <= 1:  
+                    # No hunk headers found → use whole patch
                     chunks.append({
                         "path": f["filename"],
-                        "hunk": header + body
-
+                        "hunk": patch
                     })
+                else:
+            
+                    for i in range(1, len(parts), 2):
+                        header = parts[i]
+                        body = parts[i + 1]
+                        chunks.append({
+                            "path": f["filename"],
+                            "hunk": header + body
+
+                        })
+                print(f"📂 File {f['filename']} → {len(chunks)} chunks so far")
 
             print(f"📝 Prepared {len(chunks)} hunks for PR #{pr_number}")
             
             # === 4) TODO: Call LLM and post comments here ===
             review_output = await generate_review(pr_title, chunks)
-
-            # Parse GPT-5 output into comment objects
+            print(f"💬 Generated review output for PR #{pr_number}")
+            # Parse GPT-4.1 output into comment objects
             comments = parse_review_json(review_output)
+            print(f"💬 Generated {len(comments)} comments for PR #{pr_number}")
             # Post to GitHub
             await post_pr_comments(owner, name, pr_number, comments, github_token)
-            
+            print(f"✅ Posted {len(comments)} comments to PR #{pr_number}")
         except Exception as e:
             print(f"💥 Error processing job: {e}")
             traceback.print_exc()

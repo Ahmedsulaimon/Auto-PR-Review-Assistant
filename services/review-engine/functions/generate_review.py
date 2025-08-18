@@ -12,20 +12,33 @@ async def generate_review(pr_title, chunks):
     prompt = f"Review the following PR: {pr_title}\n\n"
     for chunk in chunks:
         prompt += f"File: {chunk['path']}\n{chunk['hunk']}\n\n"
-    prompt += "Provide feedback in a JSON list with: file, comment, and line_number."
-
+    prompt += """
+        Return ONLY valid JSON (no explanations, no text outside JSON).
+        Format:
+        [
+        { "file": "filename.ext", "comment": "your feedback here", "line_number": 42 }
+        ]
+        """
     response = llm_client.chat.completions.create(
         model="gpt-4.1",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": prompt}],
     )
 
-    return response.choices[0].message.content
+    return response.choices[0].message.content.strip()
 
 def parse_review_json(review_output):
-                try:
-                    return json.loads(review_output)
-                except Exception as e:
-                    print(f"❌ Failed to parse review output as JSON: {e}")
-                    traceback.print_exc()
-                    return []
+    try:
+        data = json.loads(review_output)
+        if isinstance(data, dict) and "output" in data:
+            return data["output"]  # handle wrapped case
+        if isinstance(data, list):
+            return data
+        print("⚠️ Unexpected JSON shape:", data)
+        return []
+    except Exception as e:
+        print(f"❌ Invalid JSON from LLM: {e}")
+        print(f"⚠️ Raw output was:\n{review_output}")
+        traceback.print_exc()
+        return []
+
                     

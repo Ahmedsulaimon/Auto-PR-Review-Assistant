@@ -19,7 +19,7 @@ The Minimum Viable Product will include the following capabilities:
    - Support for basic code quality checks: syntax, linting reminders, docstrings.
 
 3. **Inline Comment Posting**  
-   - Post review comments directly on the PR diffs via GitHub API.  
+   - Post review comments directly on the PR diffs via GitHub comment API.  
    - Group comments by file and section.
 
 4. **Configuration & Thresholds**  

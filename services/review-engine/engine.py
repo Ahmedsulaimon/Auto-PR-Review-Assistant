@@ -155,7 +155,6 @@ async def review_worker():
                 patch = f.get("patch")
                 if not patch:
                     continue
-                print(f"📂 File info: {f.keys()}")
 
                 parts = re.split(r"(^@@.*@@\n)", patch, flags=re.MULTILINE)
                 if len(parts) <= 1:  
@@ -174,11 +173,8 @@ async def review_worker():
                             "hunk": header + body
 
                         })
-                print(f"📂 File {f['filename']} → {len(chunks)} chunks so far")
-
-            print(f"📝 Prepared {len(chunks)} hunks for PR #{pr_number}")
-            
-            # === 4) TODO: Call LLM and post comments here ===
+             
+            # === 4)  Call LLM and post comments here ===
             review_output = await generate_review(pr_title, chunks)
             print(f"💬 Generated review output for PR #{pr_number}")
             # Parse GPT-4.1 output into comment objects
@@ -187,6 +183,19 @@ async def review_worker():
             # Post to GitHub
             await post_pr_comments(owner, name, pr_number, comments, github_token)
             print(f"✅ Posted {len(comments)} comments to PR #{pr_number}")
+
+            history_entry = {
+                "repo": repo,
+                "pr_number": pr_number,
+                "title": pr_title,
+                "url": pr_url, 
+                "status": "done",
+                "comments": comments,  # raw parsed comments
+            }
+            await redis.rpush("pr-review-history", json.dumps(history_entry))
+           
+            await redis.ltrim("pr-review-history", -100, -1)
+            print(f"📝 Saved PR #{pr_number} review to history.")
         except Exception as e:
             print(f"💥 Error processing job: {e}")
             traceback.print_exc()

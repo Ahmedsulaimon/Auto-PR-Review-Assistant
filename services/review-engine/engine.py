@@ -13,10 +13,7 @@ async def review_worker():
     redis_url = os.getenv("REDIS_URL_DOCKER")
     github_token = os.getenv('GITHUB_TOKEN')
 
-    print(f"📋 Environment check:")
-    print(f"  - Redis URL: {' Set' if redis_url else ' Missing'}")
-    print(f"  - GitHub Token: {' Set' if github_token else ' Missing'}")
-
+   
     if not redis_url:
         print("ERROR: REDIS_URL_DOCKER environment variable is not set!")
         return

@@ -30,9 +30,18 @@ def parse_review_json(review_output):
     try:
         data = json.loads(review_output)
         if isinstance(data, dict) and "output" in data:
-            return data["output"]  # handle wrapped case
+            data = data["output"]
+
         if isinstance(data, list):
-            return data
+            normalized = []
+            for c in data:
+                normalized.append({
+                    "body": c.get("body") or c.get("comment") or "(no text)",
+                    "path": c.get("path") or c.get("file") or "UnknownFile",
+                    "line": c.get("line") or c.get("line_number"),
+                })
+            return normalized
+
         print("⚠️ Unexpected JSON shape:", data)
         return []
     except Exception as e:
@@ -40,5 +49,6 @@ def parse_review_json(review_output):
         print(f"⚠️ Raw output was:\n{review_output}")
         traceback.print_exc()
         return []
+
 
                     

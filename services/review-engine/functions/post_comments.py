@@ -13,13 +13,13 @@ async def post_pr_comments(owner, repo, pr_number, comments, github_token):
 
         for comment in comments:
             payload = {
-                "body": comment["comment"],
-                "commit_id": commit_id,
-                "path": comment["file"],
-                "side": "RIGHT",
-                "line": comment["line_number"]
-            }
-            print(f"📤 Posting comment payload: {payload}")
+            "body": comment.get("body") or comment.get("comment"),
+            "commit_id": commit_id,
+            "path": comment.get("path") or comment.get("file"),
+            "side": "RIGHT",
+            "line": comment.get("line") or comment.get("line_number"),
+                }
+          
             resp = await client.post(url, headers=headers, json=payload)
             print(f"🔍 Status: {resp.status_code}")
-            print(f"🔍 Response: {resp.text}")
+           

@@ -3,9 +3,10 @@ import argparse
 import asyncio
 import json
 import os
-import aioredis
+import redis.asyncio as aioredis
 
-REDIS_URL = os.getenv("REDIS_URL_DOCKER", "redis://localhost:6379")
+
+REDIS_URL = os.getenv("REDIS_URL_HOST", "redis://localhost:6379")
 
 QUEUE_NAME = "pr-review-queue"
 HISTORY_KEY = "pr-review-history"  # store processed PRs here
@@ -45,11 +46,26 @@ async def show_pr(pr_number: int):
 
 async def recheck_pr(pr_number: int):
     redis = await aioredis.from_url(REDIS_URL, decode_responses=True)
-    # Push back into the queue for re-review
-    job = {"pr_number": pr_number, "action": "reopened"}
+
+    # Look up repo from history
+    prs = await redis.lrange(HISTORY_KEY, 0, -1)
+    repo = None
+    for entry in prs:
+        pr = json.loads(entry)
+        if pr["pr_number"] == pr_number:
+            repo = pr["repo"]
+            break
+
+    if not repo:
+        print(f"❌ Could not find repo for PR #{pr_number} in history.")
+        await redis.close()
+        return
+
+    job = {"repo": repo, "pr_number": pr_number, "action": "reopened"}
     await redis.lpush(QUEUE_NAME, json.dumps(job))
-    print(f"♻️ Requeued PR #{pr_number} for re-review.")
+    print(f"♻️ Requeued PR #{pr_number} ({repo}) for re-review.")
     await redis.close()
+
 
 
 def main():
@@ -82,3 +98,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+#python cli/cli.py list-prs --limit 5
+#python cli/cli.py show-pr 1
+#python cli/cli.py recheck-pr 1

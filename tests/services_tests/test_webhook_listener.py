@@ -12,17 +12,27 @@ client = TestClient(app)
 
 
 def generate_signature(secret: str, body: bytes) -> str:
+    """
+    Generate a GitHub-style HMAC SHA256 signature for the webhook payload.
+    """
     return "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
 
 
 @pytest.fixture(autouse=True)
 def set_env_vars(monkeypatch):
+    """
+    Automatically set required environment variables for each test.
+    """
     monkeypatch.setenv("GITHUB_SECRET", "testsecret")
     monkeypatch.setenv("REDIS_URL_DOCKER", "redis://fake-url")
 
 
 @pytest.mark.asyncio
 async def test_valid_signature_and_pr_event(monkeypatch):
+    """
+    Test webhook with a valid signature and a pull request event.
+    Should enqueue the event in Redis and return success.
+    """
     body = {
         "repository": {"full_name": "user/repo"},
         "pull_request": {"number": 42},
@@ -36,6 +46,7 @@ async def test_valid_signature_and_pr_event(monkeypatch):
     fake_redis.lpush.return_value = 1
     fake_redis.ping.return_value = True
 
+    # Patch Redis connection to use the fake_redis mock
     with patch("services.webhook-listener.main.from_url", AsyncMock(return_value=fake_redis)):
         response = client.post(
             "/webhook",
@@ -51,6 +62,10 @@ async def test_valid_signature_and_pr_event(monkeypatch):
 
 
 def test_invalid_signature():
+    """
+    Test webhook with an invalid signature.
+    Should return 401 Unauthorized.
+    """
     body = {"repository": {"full_name": "user/repo"}}
     body_bytes = json.dumps(body).encode()
 
@@ -68,6 +83,10 @@ def test_invalid_signature():
 
 
 def test_non_pr_event(monkeypatch):
+    """
+    Test webhook with a valid signature but not a pull request event.
+    Should return ignored=True.
+    """
     body = {
         "repository": {"full_name": "user/repo"},
         "action": "opened",

@@ -3,4 +3,5 @@ httpx
 redis
 gql
 asyncio
-
+pytest
+pytest-asyncio

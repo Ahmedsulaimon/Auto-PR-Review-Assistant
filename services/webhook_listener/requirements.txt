@@ -7,3 +7,5 @@ httpx
 python-multipart
 redis
 pydantic
+pytest
+pytest-asyncio

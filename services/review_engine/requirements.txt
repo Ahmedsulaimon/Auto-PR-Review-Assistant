@@ -12,3 +12,5 @@ uvicorn[standard]
 python-dotenv
 traceback2
 openai
+pytest
+pytest-asyncio

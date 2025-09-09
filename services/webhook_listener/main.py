@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Header, HTTPException, Request
 import json
-from aioredis import from_url
+from redis.asyncio import from_url
 import hmac, hashlib, os
 import sys
 
@@ -9,7 +9,7 @@ app = FastAPI()
 
 
 @app.post("/webhook")
-async def handle_webhook(request: Request, x_hub_signature: str = Header(...)):
+async def handle_webhook(request: Request):
         secret = os.getenv("GITHUB_SECRET").encode()
         body = await request.body()
         x_hub_signature = request.headers.get("x-hub-signature-256")

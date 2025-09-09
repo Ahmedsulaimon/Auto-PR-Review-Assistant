@@ -1,5 +1,5 @@
 import asyncio, json, re, os
-from aioredis import from_url
+from redis.asyncio import from_url
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 from functions.post_comments import post_pr_comments

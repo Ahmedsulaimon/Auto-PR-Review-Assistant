@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
 python-dotenv
-aioredis
+redis>=4.2.0
 aiohttp
 httpx
 python-multipart

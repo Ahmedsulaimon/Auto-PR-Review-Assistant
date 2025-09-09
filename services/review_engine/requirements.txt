@@ -1,6 +1,6 @@
 gql[aiohttp]
 asyncio
-aioredis
+redis>=4.2.0
 pathlib 
 aiohttp
 dotenv

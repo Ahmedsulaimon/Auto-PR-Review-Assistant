@@ -1,4 +1,5 @@
 # tests/service_tests/test_webhook_listener.py
+import multipart
 import os
 import json
 import hmac
@@ -47,7 +48,7 @@ async def test_valid_signature_and_pr_event(monkeypatch):
     fake_redis.ping.return_value = True
 
     # Patch Redis connection to use the fake_redis mock
-    with patch("services.webhook-listener.main.from_url", AsyncMock(return_value=fake_redis)):
+    with patch("services.webhook_listener.main.from_url", AsyncMock(return_value=fake_redis)):
         response = client.post(
             "/webhook",
             headers={"x-hub-signature-256": signature},

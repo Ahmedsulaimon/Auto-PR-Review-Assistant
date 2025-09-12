@@ -21,12 +21,8 @@ The Minimum Viable Product will include the following capabilities:
 3. **Inline Comment Posting**  
    - Post review comments directly on the PR diffs via GitHub comment API.  
    - Group comments by file and section.
-
-4. **Configuration & Thresholds**  
-   - Allow repository owners to configure which checks are enabled (e.g., style, complexity, security).  
-   - Threshold for comment verbosity (e.g., summary‑only vs. detailed feedback).
-
-5. **Basic Dashboard (CLI Stub)**  
+   
+4. **Basic Dashboard (CLI Stub)**  
    - Local CLI to list recent analyzed PRs and their review statuses.  
 
 ## Tech Stack

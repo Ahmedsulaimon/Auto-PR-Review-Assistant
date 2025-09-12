@@ -1,9 +1,9 @@
-import asyncio, json, re, os
+import json, re, os
 from redis.asyncio import from_url
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
-from functions.post_comments import post_pr_comments
-from functions.generate_review import generate_review, parse_review_json
+from services.review_engine.functions.post_comments import post_pr_comments
+from services.review_engine.functions.generate_review import generate_review, parse_review_json
 import httpx
 import traceback
 import difflib
@@ -198,6 +198,7 @@ async def review_worker():
             traceback.print_exc()
 
 if __name__ == "__main__":
+    import asyncio
     asyncio.run(review_worker())
 
  #docker exec -it infrastructure-review-engine-1 bash

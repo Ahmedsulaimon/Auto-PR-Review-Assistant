@@ -7,8 +7,10 @@ from services.review_engine.functions.generate_review import generate_review, pa
 import httpx
 import traceback
 import difflib
+import signal
 
 async def review_worker():
+   try: 
     print(" Starting review worker...")
     redis_url = os.getenv("REDIS_URL_DOCKER")
     github_token = os.getenv('GITHUB_TOKEN')
@@ -196,11 +198,20 @@ async def review_worker():
         except Exception as e:
             print(f"💥 Error processing job: {e}")
             traceback.print_exc()
+            
+   except asyncio.CancelledError:
+      print("🔹 Review worker stopped gracefully.")        
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(review_worker())
-
+    loop = asyncio.get_event_loop()
+    # Handle SIGTERM to stop gracefully
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, loop.stop)
+    try:
+        loop.run_until_complete(review_worker())
+    finally:
+        loop.close()
  #docker exec -it infrastructure-review-engine-1 bash
  #python engine.py
 

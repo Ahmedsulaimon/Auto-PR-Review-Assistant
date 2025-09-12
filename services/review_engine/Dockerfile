@@ -1,7 +1,14 @@
 FROM python:3.10-slim
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy requirements first for caching
+COPY services/review-engine/requirements.txt ./services/review-engine/requirements.txt
+RUN pip install --no-cache-dir -r ./services/review-engine/requirements.txt
+
+# Copy everything
 COPY . .
-CMD ["python", "engine.py"]
+
+# Start worker
+CMD ["python", "-u", "services/review-engine/engine.py"]
+

@@ -10,4 +10,5 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY services/review_engine /app/services/review_engine
 
 ENV PYTHONPATH=/app
-CMD ["python", "-u", "services/review_engine/engine.py"]
+CMD ["python", "-u", "engine.py"]
+#dugging dockerfile for deployment

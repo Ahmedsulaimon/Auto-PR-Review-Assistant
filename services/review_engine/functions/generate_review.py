@@ -61,13 +61,21 @@ from openai import OpenAI
 import os
 
 def get_client():
-    api_key = os.environ.get("OPENAI_API_KEY", "fake-key-for-tests")
-   
-    return OpenAI(
-        base_url="https://models.github.ai/inference",
-        api_key=api_key,
-        default_headers={"Authorization": f"token {api_key}"}
-    )
+
+    api_key = os.getenv("OPENAI_API_KEY", "fake-key-for-tests")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY not set!")
+
+    if api_key.startswith("github_pat_"):
+        # GitHub Models
+        return OpenAI(
+            base_url="https://models.github.ai/inference",
+            api_key=api_key,  # still required by SDK
+            default_headers={"Authorization": f"token {api_key}"}
+        )
+    else:
+        # Regular OpenAI
+        return OpenAI(api_key=api_key)
 
 async def generate_review(pr_title, chunks):
     client = get_client()  # use lazy-loaded client
@@ -82,7 +90,7 @@ async def generate_review(pr_title, chunks):
         { "file": "filename.ext", "comment": "your feedback here", "line_number": 42 }
         ]
         """
-    response = client.chat.completions.create(
+    response = await client.chat.completions.create(
         model="gpt-4.1",
         messages=[{"role": "user", "content": prompt}],
     )
@@ -112,5 +120,5 @@ def parse_review_json(review_output):
         print(f"⚠️ Raw output was:\n{review_output}")
         traceback.print_exc()
         return []
-
+#debugging openAI key
                     

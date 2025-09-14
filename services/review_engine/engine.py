@@ -17,6 +17,12 @@ async def review_worker():
         print("🚀 Starting review worker...")
         redis_url = os.getenv("REDIS_URL_DOCKER")
         github_token = os.getenv("GITHUB_TOKEN")
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if openai_key:
+            print("✅ OPENAI_API_KEY is set, prefix:", openai_key[:8])
+        else:
+            print("❌ OPENAI_API_KEY environment variable is not set!")
+            return
 
         if not redis_url:
             print("❌ REDIS_URL_DOCKER environment variable is not set!")

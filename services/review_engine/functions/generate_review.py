@@ -62,6 +62,7 @@ import os
 
 def get_client():
     api_key = os.environ.get("OPENAI_API_KEY", "fake-key-for-tests")
+    print("DEBUG OpenAI key prefix:", os.getenv("OPENAI_API_KEY", "")[:8])
     return OpenAI(
         base_url="https://models.github.ai/inference",
         api_key=api_key
@@ -69,6 +70,7 @@ def get_client():
 
 async def generate_review(pr_title, chunks):
     client = get_client()  # use lazy-loaded client
+    
     prompt = f"Review the following PR: {pr_title}\n\n"
     for chunk in chunks:
         prompt += f"File: {chunk['path']}\n{chunk['hunk']}\n\n"

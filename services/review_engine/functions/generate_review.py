@@ -62,10 +62,11 @@ import os
 
 def get_client():
     api_key = os.environ.get("OPENAI_API_KEY", "fake-key-for-tests")
-    print("DEBUG OpenAI key prefix:", os.getenv("OPENAI_API_KEY", "")[:8])
+   
     return OpenAI(
         base_url="https://models.github.ai/inference",
-        api_key=api_key
+        api_key=api_key,
+        default_headers={"Authorization": f"token {api_key}"}
     )
 
 async def generate_review(pr_title, chunks):

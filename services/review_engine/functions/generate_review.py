@@ -60,10 +60,10 @@ import httpx
 import json
 import traceback
 
-GITHUB_MODELS_URL = "https://api.github.com/models/chat/completions"  # Fixed URL
+GITHUB_MODELS_URL = "https://models.github.ai/inference/chat/completions"  # Correct URL
 
 async def generate_review(pr_title, chunks):
-    api_key = os.getenv("OPENAI_API_KEY")  # This is actually your GitHub token
+    api_key = os.getenv("OPENAI_API_KEY")  # Your GitHub token
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY not set")
 
@@ -79,13 +79,14 @@ async def generate_review(pr_title, chunks):
         """
 
     headers = {
+        "Accept": "application/vnd.github+json",  # Required
         "Authorization": f"Bearer {api_key}",
+        "X-GitHub-Api-Version": "2022-11-28",    # Required
         "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2024-07-01",  # Add this back for GitHub API
     }
 
     body = {
-        "model": "gpt-4o",  # GitHub Models uses "gpt-4o" not "gpt-4.1"
+        "model": "openai/gpt-4.1",  # Full model ID with publisher prefix
         "messages": [{"role": "user", "content": prompt}],
     }
 

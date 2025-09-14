@@ -55,31 +55,18 @@
 #         traceback.print_exc()
 #         return []
 
+import os
+import httpx
 import json
 import traceback
-from openai import OpenAI
-import os
 
-def get_client():
-
-    api_key = os.getenv("OPENAI_API_KEY", "fake-key-for-tests")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY not set!")
-
-    if api_key.startswith("github_pat_"):
-        # GitHub Models
-        return OpenAI(
-            base_url="https://models.github.ai/inference",
-            api_key=api_key,  # still required by SDK
-            default_headers={"Authorization": f"token {api_key}"}
-        )
-    else:
-        # Regular OpenAI
-        return OpenAI(api_key=api_key)
+GITHUB_MODELS_URL = "https://models.github.ai/inference/v1/chat/completions"
 
 async def generate_review(pr_title, chunks):
-    client = get_client()  # use lazy-loaded client
-    
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY not set")
+
     prompt = f"Review the following PR: {pr_title}\n\n"
     for chunk in chunks:
         prompt += f"File: {chunk['path']}\n{chunk['hunk']}\n\n"
@@ -90,12 +77,26 @@ async def generate_review(pr_title, chunks):
         { "file": "filename.ext", "comment": "your feedback here", "line_number": 42 }
         ]
         """
-    response = await client.chat.completions.create(
-        model="gpt-4.1",
-        messages=[{"role": "user", "content": prompt}],
-    )
 
-    return response.choices[0].message.content.strip()
+    headers = {
+        "Authorization": f"token {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    body = {
+        "model": "gpt-4.1",
+        "messages": [{"role": "user", "content": prompt}],
+    }
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        resp = await client.post(GITHUB_MODELS_URL, headers=headers, json=body)
+
+        if resp.status_code != 200:
+            raise RuntimeError(f"GitHub Models error {resp.status_code}: {resp.text}")
+
+        data = resp.json()
+        return data["choices"][0]["message"]["content"].strip()
+
 
 def parse_review_json(review_output):
     try:
@@ -120,5 +121,6 @@ def parse_review_json(review_output):
         print(f"⚠️ Raw output was:\n{review_output}")
         traceback.print_exc()
         return []
+
 #debugging openAI key
                     

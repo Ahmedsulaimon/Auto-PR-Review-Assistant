@@ -60,7 +60,7 @@ import httpx
 import json
 import traceback
 
-GITHUB_MODELS_URL = "https://api.github.com/v1/chat/completions"
+GITHUB_MODELS_URL = "https://models.inference.ai.azure.com/chat/completions"
 
 async def generate_review(pr_title, chunks):
     api_key = os.getenv("OPENAI_API_KEY")
@@ -81,7 +81,6 @@ async def generate_review(pr_title, chunks):
     headers = {
         "Authorization": f"Bearer {api_key}",  # ✅ correct format
         "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2023-07-01",  # ✅ required
     }
 
     body = {

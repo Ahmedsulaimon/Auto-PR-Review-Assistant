@@ -15,7 +15,7 @@ services:
       - redis-data:/data
 
   review-engine:
-    build: ../services/review-engine
+    build: ../services/review_engine
     environment:
       - REDIS_URL_DOCKER=${REDIS_URL_DOCKER}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
  
   webhook-listener:
-    build: ../services/webhook-listener
+    build: ../services/webhook_listener
     ports:
       - "8000:8000"
     environment:

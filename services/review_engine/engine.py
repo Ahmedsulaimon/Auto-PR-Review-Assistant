@@ -12,27 +12,21 @@ from services.review_engine.auth import get_installation_token
 app = FastAPI()
 _worker_task: asyncio.Task | None = None
 
-
 async def review_worker():
     try:
         print("🚀 Starting review worker...")
         redis_url = os.getenv("REDIS_URL_DOCKER")
-        openai_key = os.getenv("OPENAI_API_KEY")
         installation_id = int(os.getenv("GITHUB_INSTALLATION_ID"))
-
-        github_token = await get_installation_token(installation_id)
-
-        if openai_key:
-            print("✅ OPENAI_API_KEY is set, prefix:", openai_key[:8])
-        else:
-            print("❌ OPENAI_API_KEY environment variable is not set!")
-            return
+        openai_key = os.getenv("OPENAI_API_KEY")
 
         if not redis_url:
-            print("❌ REDIS_URL_DOCKER environment variable is not set!")
+            print("❌ REDIS_URL_DOCKER not set")
             return
-        if not github_token:
-            print("❌ GITHUB_TOKEN environment variable is not set!")
+        if not installation_id:
+            print("❌ GITHUB_INSTALLATION_ID not set")
+            return
+        if not openai_key:
+            print("❌ OPENAI_API_KEY not set")
             return
 
         # Connect to Redis with retries
@@ -57,19 +51,8 @@ async def review_worker():
                     traceback.print_exc()
                     return
 
-        # GitHub GraphQL client
-        graphql_transport = AIOHTTPTransport(
-            url="https://api.github.com/graphql",
-            headers={"Authorization": f"Bearer {github_token}"},
-            ssl=False,
-        )
-        graphql_client = Client(transport=graphql_transport, fetch_schema_from_transport=True)
-        rest_headers = {
-            "Authorization": f"Bearer {github_token}",
-            "Accept": "application/vnd.github.v3+json",
-        }
-
         print("👂 Listening on queue: pr-review-queue")
+
         while True:
             try:
                 print("⏳ Waiting for job from Redis...")
@@ -89,46 +72,76 @@ async def review_worker():
 
                 action = job.get("action", "").lower().strip()
                 valid_actions = ["opened", "synchronize", "reopened", "edited"]
-                if not action:
-                    continue
-                closest = difflib.get_close_matches(action, valid_actions, n=1, cutoff=0.8)
-                if closest:
-                    action = closest[0]
                 if action not in valid_actions:
                     continue
 
                 repo, pr_number = job["repo"], job["pr_number"]
                 owner, name = repo.split("/")
 
-                # === 1) PR metadata ===
-                query = gql(
-                    """
-                    query($owner: String!, $name: String!, $number: Int!) {
-                      repository(owner: $owner, name: $name) {
-                        pullRequest(number: $number) {
-                          id
-                          title
-                          url
+                # === fetch fresh GitHub installation token ===
+                github_token = await get_installation_token(installation_id)
+
+                async def run_github_query():
+                    graphql_transport = AIOHTTPTransport(
+                        url="https://api.github.com/graphql",
+                        headers={"Authorization": f"Bearer {github_token}"}
+                    )
+                    graphql_client = Client(
+                        transport=graphql_transport,
+                        fetch_schema_from_transport=True,
+                    )
+                    query = gql(
+                        """
+                        query($owner: String!, $name: String!, $number: Int!) {
+                          repository(owner: $owner, name: $name) {
+                            pullRequest(number: $number) {
+                              id
+                              title
+                              url
+                            }
+                          }
                         }
-                      }
-                    }
-                    """
-                )
-                result = await graphql_client.execute_async(
-                    query, variable_values={"owner": owner, "name": name, "number": pr_number}
-                )
+                        """
+                    )
+                    return await graphql_client.execute_async(
+                        query, variable_values={"owner": owner, "name": name, "number": pr_number}
+                    )
+
+                # === retry once on 401 ===
+                try:
+                    result = await run_github_query()
+                except Exception as e:
+                    if "401" in str(e):
+                        print("⚠️ GitHub token expired, refreshing...")
+                        github_token = await get_installation_token(installation_id)
+                        result = await run_github_query()
+                    else:
+                        raise
+
                 pr_title = result["repository"]["pullRequest"]["title"]
                 pr_url = result["repository"]["pullRequest"]["url"]
 
-                # === 2) Changed files (REST) ===
+                # === changed files via REST ===
+                rest_headers = {
+                    "Authorization": f"Bearer {github_token}",
+                    "Accept": "application/vnd.github.v3+json",
+                }
                 async with httpx.AsyncClient() as client:
                     resp = await client.get(
                         f"https://api.github.com/repos/{owner}/{name}/pulls/{pr_number}/files",
                         headers=rest_headers,
                     )
+                    if resp.status_code == 401:
+                        print("⚠️ REST token expired, refreshing...")
+                        github_token = await get_installation_token(installation_id)
+                        rest_headers["Authorization"] = f"Bearer {github_token}"
+                        resp = await client.get(
+                            f"https://api.github.com/repos/{owner}/{name}/pulls/{pr_number}/files",
+                            headers=rest_headers,
+                        )
                     files = resp.json()
 
-                # === 3) Parse patches ===
+                # === parse patches ===
                 chunks = []
                 for f in files:
                     patch = f.get("patch")
@@ -141,10 +154,10 @@ async def review_worker():
                         for i in range(1, len(parts), 2):
                             chunks.append({"path": f["filename"], "hunk": parts[i] + parts[i + 1]})
 
-                # === 4) Generate & post review ===
+                # === generate & post review ===
                 review_output = await generate_review(pr_title, chunks)
                 comments = parse_review_json(review_output)
-                await post_pr_comments(owner, name, pr_number, comments, github_token)
+                await post_pr_comments(owner, name, pr_number, comments, github_token, installation_id)
 
                 history_entry = {
                     "repo": repo,
@@ -158,11 +171,13 @@ async def review_worker():
                 await redis.ltrim("pr-review-history", -100, -1)
 
                 print(f"✅ Processed PR #{pr_number} ({len(comments)} comments)")
+
             except Exception as e:
                 print(f"💥 Error in job loop: {e}")
                 traceback.print_exc()
     except asyncio.CancelledError:
         print("🔹 Review worker stopped gracefully.")
+
 
 
 @app.on_event("startup")

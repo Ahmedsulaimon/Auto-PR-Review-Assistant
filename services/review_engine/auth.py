@@ -14,7 +14,7 @@ def generate_jwt():
         raise RuntimeError("Missing GITHUB_APP_ID or GITHUB_APP_PRIVATE_KEY")
 
     # Convert PEM string into usable RSA key
-    private_key = private_key.replace("\\n", "\n")  # Handle Render-style envs
+     private_key = private_key.strip()  # Handle Render-style envs
 
     now = int(time.time())
     payload = {

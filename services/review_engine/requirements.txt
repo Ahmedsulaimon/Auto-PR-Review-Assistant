@@ -14,3 +14,6 @@ traceback2
 openai
 pytest
 pytest-asyncio
+PyJWT 
+httpx
+cryptography

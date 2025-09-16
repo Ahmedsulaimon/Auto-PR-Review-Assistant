@@ -7,6 +7,7 @@ import httpx
 
 from services.review_engine.functions.post_comments import post_pr_comments
 from services.review_engine.functions.generate_review import generate_review, parse_review_json
+from services.review_engine.auth import get_installation_token
 
 app = FastAPI()
 _worker_task: asyncio.Task | None = None
@@ -16,8 +17,11 @@ async def review_worker():
     try:
         print("🚀 Starting review worker...")
         redis_url = os.getenv("REDIS_URL_DOCKER")
-        github_token = os.getenv("GITHUB_TOKEN")
         openai_key = os.getenv("OPENAI_API_KEY")
+        installation_id = int(os.getenv("GITHUB_INSTALLATION_ID"))
+
+        github_token = await get_installation_token(installation_id)
+
         if openai_key:
             print("✅ OPENAI_API_KEY is set, prefix:", openai_key[:8])
         else:

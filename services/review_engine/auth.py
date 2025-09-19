@@ -10,32 +10,34 @@ def generate_jwt():
     """
     app_id = os.getenv("GITHUB_APP_ID")
     private_key_env = os.getenv("GITHUB_APP_PRIVATE_KEY")
-    
+
     if not app_id:
         raise RuntimeError("Missing GITHUB_APP_ID")
-    
-    # Handle different key formats
-    private_key = None
-    
-    
-    if private_key_env:
-        # Direct key with \n replacements
-        private_key = private_key_env.replace('\\n', '\n').strip()
-
-    if not private_key:
+    if not private_key_env:
         raise RuntimeError("Missing GITHUB_APP_PRIVATE_KEY")
-    
-    # Validate key format
-    if not private_key.startswith('-----BEGIN') or not private_key.endswith('-----'):
-        raise RuntimeError("Private key doesn't appear to be in PEM format")
-    
+
+    # Handle both Render cases:
+    #   1. Stored with literal "\n"
+    #   2. Stored with real newlines
+    if "\\n" in private_key_env:
+        private_key = private_key_env.replace("\\n", "\n").strip()
+    else:
+        private_key = private_key_env.strip()
+
+    # Debug: print first few characters so you can verify format
+    print("🔑 Loaded key:", repr(private_key[:80]))
+
+    # Sanity check PEM
+    if not private_key.startswith("-----BEGIN") or "-----END" not in private_key:
+        raise RuntimeError("Private key doesn't look like a PEM file")
+
     now = int(time.time())
     payload = {
         "iat": now - 60,          # issued at
         "exp": now + (10 * 60),   # max 10 minutes
         "iss": app_id
     }
-    
+
     try:
         return jwt.encode(payload, private_key, algorithm="RS256")
     except Exception as e:

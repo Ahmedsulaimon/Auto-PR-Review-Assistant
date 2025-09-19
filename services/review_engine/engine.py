@@ -16,7 +16,7 @@ async def review_worker():
     try:
         print("🚀 Starting review worker...")
         redis_url = os.getenv("REDIS_URL_DOCKER")
-        installation_id = int(os.getenv("GITHUB_INSTALLATION_ID"))
+       # installation_id = int(os.getenv("GITHUB_INSTALLATION_ID"))
         openai_key = os.getenv("OPENAI_API_KEY")
 
         if not redis_url:
@@ -77,6 +77,11 @@ async def review_worker():
 
                 repo, pr_number = job["repo"], job["pr_number"]
                 owner, name = repo.split("/")
+                
+                installation_id = job.get("installation_id")
+                if not installation_id:
+                    print("❌ No installation_id in job payload")
+                    continue
 
                 # === fetch fresh GitHub installation token ===
                 github_token = await get_installation_token(installation_id)

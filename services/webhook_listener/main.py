@@ -32,7 +32,8 @@ async def handle_webhook(request: Request):
         job = {
                 "repo": payload["repository"]["full_name"],
                 "pr_number": pr["number"],
-                "action": payload["action"]  # e.g. "opened", "synchronize"
+                "action": payload["action"],  # e.g. "opened", "synchronize"
+                "installation_id": payload["installation"]["id"]
             }
         push_result = await redis.lpush("pr-review-queue", json.dumps(job))
         print(f"LPUSH result: {push_result}", flush=True)

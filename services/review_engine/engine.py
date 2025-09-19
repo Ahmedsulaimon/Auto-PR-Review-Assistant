@@ -2,8 +2,8 @@ import json, re, os
 from redis.asyncio import from_url
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
-from services.review_engine.functions.post_comments import post_pr_comments
-from services.review_engine.functions.generate_review import generate_review, parse_review_json
+from functions.post_comments import post_pr_comments
+from functions.generate_review import generate_review, parse_review_json
 import httpx
 import traceback
 import difflib

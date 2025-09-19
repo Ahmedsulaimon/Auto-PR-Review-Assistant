@@ -15,12 +15,13 @@ services:
       - redis-data:/data
 
   review-engine:
-    build: ../services/review-engine
+    build: ../services/review_engine
     environment:
       - REDIS_URL_DOCKER=${REDIS_URL_DOCKER}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GITHUB_SECRET=${GITHUB_SECRET}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GITHUB_APP_PRIVATE_KEY=${GITHUB_APP_PRIVATE_KEY}
     env_file:
       - .env
     depends_on:
@@ -29,7 +30,7 @@ services:
     restart: unless-stopped
  
   webhook-listener:
-    build: ../services/webhook-listener
+    build: ../services/webhook_listener
     ports:
       - "8000:8000"
     environment:

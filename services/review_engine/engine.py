@@ -22,9 +22,6 @@ async def review_worker():
         if not redis_url:
             print("❌ REDIS_URL_DOCKER not set")
             return
-        if not installation_id:
-            print("❌ GITHUB_INSTALLATION_ID not set")
-            return
         if not openai_key:
             print("❌ OPENAI_API_KEY not set")
             return

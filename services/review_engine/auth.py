@@ -6,38 +6,43 @@ import base64
 
 def generate_jwt():
     """
-    Generate a JWT for GitHub App authentication
+    Generate a JWT for GitHub App authentication p
     """
     app_id = os.getenv("GITHUB_APP_ID")
     private_key_env = os.getenv("GITHUB_APP_PRIVATE_KEY")
-
+    private_key_b64 = os.getenv("GITHUB_APP_PRIVATE_KEY_B64")
+    
     if not app_id:
         raise RuntimeError("Missing GITHUB_APP_ID")
-    if not private_key_env:
-        raise RuntimeError("Missing GITHUB_APP_PRIVATE_KEY")
-
-    # Handle both Render cases:
-    #   1. Stored with literal "\n"
-    #   2. Stored with real newlines
-    if "\\n" in private_key_env:
-        private_key = private_key_env.replace("\\n", "\n").strip()
+    
+    # Handle different key formats
+    private_key = None
+    
+    if private_key_b64:
+        # Base64 encoded key
+        try:
+            private_key = base64.b64decode(private_key_b64).decode('utf-8')
+        except Exception as e:
+            raise RuntimeError(f"Failed to decode base64 private key: {e}")
+    
+    elif private_key_env:
+        # Direct key with \n replacements
+        private_key = private_key_env.replace('\\n', '\n').strip()
+    
     else:
-        private_key = private_key_env.strip()
-
-    # Debug: print first few characters so you can verify format
-    print("🔑 Loaded key:", repr(private_key[:80]))
-
-    # Sanity check PEM
-    if not private_key.startswith("-----BEGIN") or "-----END" not in private_key:
-        raise RuntimeError("Private key doesn't look like a PEM file")
-
+        raise RuntimeError("Missing GITHUB_APP_PRIVATE_KEY or GITHUB_APP_PRIVATE_KEY_B64")
+    
+    # Validate key format
+    if not private_key.startswith('-----BEGIN') or not private_key.endswith('-----'):
+        raise RuntimeError("Private key doesn't appear to be in PEM format")
+    
     now = int(time.time())
     payload = {
         "iat": now - 60,          # issued at
         "exp": now + (10 * 60),   # max 10 minutes
         "iss": app_id
     }
-
+    
     try:
         return jwt.encode(payload, private_key, algorithm="RS256")
     except Exception as e:

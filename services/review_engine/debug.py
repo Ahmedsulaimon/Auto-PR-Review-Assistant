@@ -8,3 +8,4 @@ payload = {"iat": now - 60, "exp": now + 600, "iss": app_id}
 
 token = jwt.encode(payload, private_key, algorithm="RS256")
 print("JWT:", token[:80], "...")
+

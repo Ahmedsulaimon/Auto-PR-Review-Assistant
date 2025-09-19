@@ -6,7 +6,7 @@ import base64
 
 def generate_jwt():
     """
-    Generate a JWT for GitHub App authentication p
+    Generate a JWT for GitHub App authentication
     """
     app_id = os.getenv("GITHUB_APP_ID")
     private_key_env = os.getenv("GITHUB_APP_PRIVATE_KEY")
@@ -25,9 +25,9 @@ def generate_jwt():
         except Exception as e:
             raise RuntimeError(f"Failed to decode base64 private key: {e}")
     
-    elif private_key_env:
-        # Direct key with \n replacements
-        private_key = private_key_env.replace('\\n', '\n').strip()
+    # elif private_key_env:
+    #     Direct key with \n replacements
+    #     private_key = private_key_env.replace('\\n', '\n').strip()
     
     else:
         raise RuntimeError("Missing GITHUB_APP_PRIVATE_KEY or GITHUB_APP_PRIVATE_KEY_B64")

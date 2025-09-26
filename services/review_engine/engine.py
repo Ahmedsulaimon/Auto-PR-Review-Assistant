@@ -11,12 +11,10 @@ from services.review_engine.auth import get_installation_token
 
 app = FastAPI()
 _worker_task: asyncio.Task | None = None
-
 async def review_worker():
     try:
         print("🚀 Starting review worker...")
         redis_url = os.getenv("REDIS_URL_DOCKER")
-       # installation_id = int(os.getenv("GITHUB_INSTALLATION_ID"))
         openai_key = os.getenv("OPENAI_API_KEY")
 
         if not redis_url:
@@ -48,18 +46,21 @@ async def review_worker():
                     traceback.print_exc()
                     return
 
-        print("👂 Listening on queue: pr-review-queue")
+        print("👂 Listening for jobs...")
 
         while True:
             try:
                 print("⏳ Waiting for job from Redis...")
-                response = await redis.brpop("pr-review-queue")
+
+                # 🔑 Instead of hardcoding, block on ANY pr-review-queue
+                # Use pattern with BRPOP for all installations
+                response = await redis.brpop([key async for key in redis.scan_iter("pr-review-queue:*")])
 
                 if not response or len(response) != 2:
                     print(f"⚠️ Invalid response from queue: {response}")
                     continue
 
-                _, payload = response
+                queue_name, payload = response
                 try:
                     job = json.loads(payload)
                 except Exception:
@@ -79,6 +80,7 @@ async def review_worker():
                 if not installation_id:
                     print("❌ No installation_id in job payload")
                     continue
+
 
                 # === fetch fresh GitHub installation token ===
                 github_token = await get_installation_token(installation_id)
@@ -161,6 +163,8 @@ async def review_worker():
                 comments = parse_review_json(review_output)
                 await post_pr_comments(owner, name, pr_number, comments, github_token, installation_id)
 
+                 # 🔑 Store into history namespace
+                history_key = f"pr-review-history:{installation_id}"
                 history_entry = {
                     "repo": repo,
                     "pr_number": pr_number,
@@ -169,10 +173,11 @@ async def review_worker():
                     "status": "done",
                     "comments": comments,
                 }
-                await redis.rpush("pr-review-history", json.dumps(history_entry))
-                await redis.ltrim("pr-review-history", -100, -1)
+                await redis.rpush(history_key, json.dumps(history_entry))
+                await redis.ltrim(history_key, -100, -1)
 
-                print(f"✅ Processed PR #{pr_number} ({len(comments)} comments)")
+               print(f"✅ Processed PR #{pr_number} for installation {installation_id} "
+                      f"({len(comments)} comments)")
 
             except Exception as e:
                 print(f"💥 Error in job loop: {e}")

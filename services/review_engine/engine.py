@@ -176,7 +176,7 @@ async def review_worker():
                 await redis.rpush(history_key, json.dumps(history_entry))
                 await redis.ltrim(history_key, -100, -1)
 
-               print(f"✅ Processed PR #{pr_number} for installation {installation_id}  {len(comments)} comments)")
+                print(f"✅ Processed PR #{pr_number} for installation {installation_id}")
                      
 
             except Exception as e:

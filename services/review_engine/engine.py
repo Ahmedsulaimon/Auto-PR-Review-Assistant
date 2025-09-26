@@ -54,7 +54,12 @@ async def review_worker():
 
                 # 🔑 Instead of hardcoding, block on ANY pr-review-queue
                 # Use pattern with BRPOP for all installations
-                response = await redis.brpop([key async for key in redis.scan_iter("pr-review-queue:*")])
+                keys = [key async for key in redis.scan_iter("pr-review-queue:*")]
+                if not keys:
+                    await asyncio.sleep(1)
+                    continue
+
+                response = await redis.brpop(*keys)
 
                 if not response or len(response) != 2:
                     print(f"⚠️ Invalid response from queue: {response}")

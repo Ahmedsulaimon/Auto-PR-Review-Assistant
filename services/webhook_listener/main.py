@@ -3,6 +3,7 @@ import json
 from redis.asyncio import from_url
 import hmac, hashlib, os
 import sys
+from query_api.routes import router as query_router
 
 app = FastAPI()
 
@@ -47,3 +48,5 @@ async def handle_webhook(request: Request):
     print(f"Enqueued PR job: {job}", file=sys.stdout, flush=True)
 
     return {"enqueued": job, "queue": queue_key}
+
+app.include_router(query_router, prefix="/api")    

@@ -50,7 +50,6 @@ async def review_worker():
 
         while True:
             try:
-                print("⏳ Waiting for job from Redis...")
 
                 # 🔑 Instead of hardcoding, block on ANY pr-review-queue
                 # Use pattern with BRPOP for all installations

@@ -1,0 +1,23 @@
+Metadata-Version: 2.4
+Name: pr-review-cli
+Version: 0.1.0
+Summary: A CLI dashboard for managing PR review history and rechecks
+Author-email: Ahmed Sulaimon <sulaimonahmed10@gmail.com>
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: httpx>=0.27.0
+
+### Boilerplate: `cli/README.md`
+
+
+# CLI Dashboard
+
+## Commands
+- `list-prs`: List recent analyzed PRs
+- `show-pr <id>`: Show details and comments
+- `recheck-pr <id>`: Trigger re-review
+
+## Examples
+```bash
+python cli.py list-prs --limit 10
+python cli.py show-pr 42

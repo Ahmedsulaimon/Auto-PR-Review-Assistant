@@ -2,8 +2,35 @@ import argparse
 import asyncio
 import httpx
 import os
+import json
+from pathlib import Path
+from dotenv import load_dotenv
 
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+# 1️⃣ Load env from infrastructure/.env if it exists
+env_path = Path(__file__).resolve().parents[1] / "infrastructure" / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+
+def load_config():
+    # First, check environment variable
+    api_url = os.getenv("API_URL")
+    if api_url:
+        return api_url
+
+    # Fallback to config file
+    config_path = Path.home() / ".pr-review" / "config.json"
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            data = json.load(f)
+            return data.get("API_URL")
+
+    print("❌ No API_URL found. Please set it with:")
+    print("   export API_URL=https://your-server.onrender.com")
+    print("   OR create ~/.pr-review/config.json with:")
+    print('   { "API_URL": "https://your-server.onrender.com" }')
+    exit(1)
+
+API_URL = load_config()
 
 async def list_prs(limit: int):
     async with httpx.AsyncClient() as client:

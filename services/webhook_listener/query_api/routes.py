@@ -20,7 +20,12 @@ def queue_key(installation_id: int) -> str:
 
 # 📝 List PRs for an installation
 async def list_prs_internal(redis, installation_id: int, limit: int = 10):
-    prs = await redis.lrange(history_key(installation_id), -limit, -1)
+    key = history_key(installation_id)
+    prs = await redis.lrange(key, -limit, -1)
+    
+    if not prs:
+        return []  # Return empty list, not None
+    
     return [json.loads(pr) for pr in prs]
 
 # 📝 Show a specific PR
@@ -35,17 +40,23 @@ async def show_pr_internal(redis, installation_id: int, pr_number: int):
 # 📝 Recheck a PR
 async def recheck_pr_internal(redis, installation_id: int, pr_number: int):
     prs = await redis.lrange(history_key(installation_id), 0, -1)
-    repo = None
+    repo, stored_installation_id = None, None
     for entry in prs:
         pr = json.loads(entry)
         if pr["pr_number"] == pr_number:
             repo = pr["repo"]
+            stored_installation_id = pr["installation_id"]
             break
     if not repo:
         return None
 
-    job = {"repo": repo, "pr_number": pr_number, "action": "reopened", "installation_id": installation_id}
-    await redis.lpush(queue_key(installation_id), json.dumps(job))
+    job = {
+        "repo": repo,
+        "pr_number": pr_number,
+        "action": "reopened",
+        "installation_id": stored_installation_id,
+    }
+    await redis.lpush(queue_key(stored_installation_id), json.dumps(job))
     return {"status": "requeued", "pr_number": pr_number, "repo": repo}
 
 
@@ -56,7 +67,9 @@ router = APIRouter()
 
 @router.get("/prs")
 async def list_prs(installation_id: int, limit: int = 10, redis=Depends(get_redis)):
-    return await list_prs_internal(redis, installation_id, limit)
+    prs = await list_prs_internal(redis, installation_id, limit)
+    # Return empty list instead of letting it fail
+    return prs if prs else []
 
 @router.get("/prs/{pr_number}")
 async def show_pr(pr_number: int, installation_id: int, redis=Depends(get_redis)):

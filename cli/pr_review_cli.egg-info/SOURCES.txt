@@ -1,6 +1,7 @@
 README.md
-cli.py
 pyproject.toml
+pr_review_cli/__init__.py
+pr_review_cli/cli.py
 pr_review_cli.egg-info/PKG-INFO
 pr_review_cli.egg-info/SOURCES.txt
 pr_review_cli.egg-info/dependency_links.txt

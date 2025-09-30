@@ -13,7 +13,9 @@ readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
   "httpx>=0.27.0",
+  "python-dotenv>=1.0.0",
 ]
 
 [project.scripts]
-pr-review = "cli:main"
+pr-review = "pr_review_cli.cli:main"
+

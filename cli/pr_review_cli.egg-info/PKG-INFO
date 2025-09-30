@@ -6,6 +6,7 @@ Author-email: Ahmed Sulaimon <sulaimonahmed10@gmail.com>
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 Requires-Dist: httpx>=0.27.0
+Requires-Dist: python-dotenv>=1.0.0
 
 ### Boilerplate: `cli/README.md`
 

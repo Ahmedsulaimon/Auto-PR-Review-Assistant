@@ -1,1 +1,1 @@
-cli
+pr_review_cli

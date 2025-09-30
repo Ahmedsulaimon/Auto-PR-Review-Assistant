@@ -109,6 +109,8 @@ auto‑pr-review-assistant/
 │   │   ├── README.md
 |   |   |── Dockerfile
 │   │   ├── main.py
+│   │   └── query_api/
+│   │   │     ├──  routes.py
 │   │   └── requirements.txt
 │   └── review-engine/
 │       ├── README.md
@@ -117,10 +119,14 @@ auto‑pr-review-assistant/
            ├── post_comments.py
 |       |── Dockerfile
 │       ├── engine.py
+│       ├── auth.py
 │       └── requirements.txt
 ├── cli/
 │   ├── README.md
-│   └── cli.py
+│   ├── pyproject.toml
+│   └── pr_review_cli/
+│   │   ├──  cli.py
+│   │   ├── __init__.py
 ├── infrastructure/
 |   |── .env    
 │   ├── docker-compose.yml
@@ -134,24 +140,13 @@ auto‑pr-review-assistant/
 
 ```
 
-## Getting Started
-### Prerequisites
-- Python 3.11
-- Redis
-- GitHub GraphQL API access token
+### Installation Link
+https://github.com/apps/auto-pr-review-assistant/installations/new
 
-### Installation
-```bash
-git clone <repo-url>
-cd auto-pr-review-assistant
-pip install -r services/webhook-listener/requirements.txt \
-            -r services/review-engine/requirements.txt
-```
 ### Usage
-- Start Redis: redis-server
-- Run webhook listener: uvicorn services/webhook-listener.main:app --reload
-- Use CLI: python cli/cli.py list-prs           
-
+When installing, simply:
+- Grant repository access (“All” or “Only selected repositories”),
+- Then open a PR 
 
 ---
 

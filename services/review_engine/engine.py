@@ -176,6 +176,7 @@ async def review_worker():
                     "url": pr_url,
                     "status": "done",
                     "comments": comments,
+                    "installation_id": installation_id,
                 }
                 await redis.rpush(history_key, json.dumps(history_entry))
                 await redis.ltrim(history_key, -100, -1)

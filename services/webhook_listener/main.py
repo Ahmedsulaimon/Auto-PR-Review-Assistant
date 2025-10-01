@@ -4,6 +4,7 @@ from redis.asyncio import from_url
 import hmac, hashlib, os
 import sys
 from query_api.routes import router as query_router
+import httpx
 
 app = FastAPI()
 
@@ -46,6 +47,16 @@ async def handle_webhook(request: Request):
 
     await redis.close()
     print(f"Enqueued PR job: {job}", file=sys.stdout, flush=True)
+
+    worker_url = os.getenv("API_URL") 
+    if worker_url:
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                await client.get(f"{worker_url}/wake")
+            print("✅ Worker pinged to wake up", flush=True)
+        except Exception as e:
+            print(f"⚠️ Failed to ping worker: {e}", flush=True)
+
 
     return {"enqueued": job, "queue": queue_key}
 

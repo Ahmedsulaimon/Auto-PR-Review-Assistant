@@ -11,6 +11,7 @@ from services.review_engine.auth import get_installation_token
 
 app = FastAPI()
 _worker_task: asyncio.Task | None = None
+
 async def review_worker():
     try:
         print("🚀 Starting review worker...")
@@ -190,8 +191,6 @@ async def review_worker():
     except asyncio.CancelledError:
         print("🔹 Review worker stopped gracefully.")
 
-
-
 @app.on_event("startup")
 async def startup_event():
     global _worker_task
@@ -214,6 +213,18 @@ async def shutdown_event():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/wake")
+async def wake():
+    """Ping endpoint to restart the worker loop if needed."""
+    global _worker_task
+    if not _worker_task or _worker_task.done():
+        loop = asyncio.get_event_loop()
+        _worker_task = loop.create_task(review_worker())
+        print("♻️ Worker re-started via /wake")
+        return {"status": "restarted"}
+    return {"status": "already_running"}
 
 
 if __name__ == "__main__":

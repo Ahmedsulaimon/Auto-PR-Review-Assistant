@@ -10,5 +10,5 @@
 
 ## Examples
 ```bash
-python cli.py list-prs --limit 10
-python cli.py show-pr 42
+python pr-review list-prs --limit 10
+python pr-review show-pr 42

@@ -99,6 +99,8 @@ While SQLite or JSON files could offer a lightweight option for early developmen
 
 ```text
 auto‑pr-review-assistant/
+├── .github/workflows/
+│    ├── publish.yml
 ├── .pr_review/
 │    ├── config.json
 ├── README.md

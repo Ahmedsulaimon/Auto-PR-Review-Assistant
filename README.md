@@ -145,7 +145,11 @@ auto‑pr-review-assistant/
 ```
 
 ### Installation Link
+#### GitHub App
 https://github.com/apps/auto-pr-review-assistant/installations/new
+
+#### CLI Tool
+https://pypi.org/project/pr-review-cli/
 
 ### Usage
 When installing, simply:
